@@ -65,10 +65,10 @@ add_openapi_routes(app, router)
 
 ```bash
 # Install dependencies
-uv pip install -e ".[test]" uvicorn
+uv sync --dev
 
 # Run the example
-python examples/basic_app.py
+uv run examples/basic_app.py
 ```
 
 Then visit http://localhost:8000/docs to see the Swagger UI documentation.
