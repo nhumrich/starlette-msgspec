@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "starlette-msgspec"
+version = "0.1.0"
+description = "FastAPI-like router for Starlette with msgspec integration"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = [
+    "starlette>=0.28.0",
+    "msgspec>=0.18.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0",
+    "httpx>=0.24.0",
+]
+
+[tool.setuptools]
+packages = ["starlette_msgspec"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.3.5",
+    "uvicorn>=0.33.0",
+]
