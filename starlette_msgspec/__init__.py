@@ -1,4 +1,3 @@
-from .router import MsgspecRouter, Body
-from .middleware import OpenAPIMiddleware
+from .router import MsgspecRouter, add_openapi_routes, generate_openapi_schema
 
-__all__ = ["MsgspecRouter", "Body", "OpenAPIMiddleware"]
+__all__ = ["MsgspecRouter", "add_openapi_routes", "generate_openapi_schema"]

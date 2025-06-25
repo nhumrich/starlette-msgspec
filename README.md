@@ -11,15 +11,15 @@ pip install starlette-msgspec
 # Or with uv
 uv pip install starlette-msgspec
 
-# For development (from cloned repository)
-uv pip install -e ".[test]"
+# For development on this library
+uv sync --dev
 ```
 
 ## Usage
 
 ```python
 from starlette.applications import Starlette
-from starlette_msgspec import MsgspecRouter, Body
+from starlette_msgspec import MsgspecRouter, add_openapi_routes
 import msgspec
 from typing import List
 
@@ -36,21 +36,23 @@ app = Starlette()
 router = MsgspecRouter()
 
 
-@router.route("/items/", "POST", tags=["items"])
-async def create_item(body: Body[Item]):
-    return body.value
+@router.post("/items", tags=["items"])
+async def create_item(body: Item):
+    return body
 
 
-@router.route("/items/", "GET", tags=["items"])
+@router.get("/items", tags=["items"])
 async def get_items() -> List[Item]:
     # ... implementation
     return [Item(name="Example", price=10.5)]
 
 
-# Include the router and the OpenAPI docs middleware
-app.include_router(router)
-app.add_middleware(router.openapi_middleware)
+# Include the router and add OpenAPI documentation routes
+router.include_router(app)
+add_openapi_routes(app, router)
 ```
+
+> **💡 For a more comprehensive example** showing multiple routers, different data models, and advanced features, check out [`examples/basic_app.py`](examples/basic_app.py).
 
 ## Features
 

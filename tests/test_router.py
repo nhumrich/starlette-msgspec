@@ -4,7 +4,7 @@ from starlette.testclient import TestClient
 import msgspec
 from typing import List
 
-from starlette_msgspec import MsgspecRouter, Body, OpenAPIMiddleware
+from starlette_msgspec import MsgspecRouter, add_openapi_routes
 
 class Item(msgspec.Struct):
     name: str
@@ -16,19 +16,19 @@ def app():
     app = Starlette()
     router = MsgspecRouter()
     
-    @router.route("/items/", "GET", tags=["items"])
+    @router.get("/items/", tags=["items"])
     async def get_items() -> List[Item]:
         return [Item(name="Test Item", price=10.0)]
     
-    @router.route("/items/", "POST", tags=["items"])
-    async def create_item(body: Body[Item]) -> Item:
-        return body.value
+    @router.post("/items/", tags=["items"])
+    async def create_item(body: Item) -> Item:
+        return body
     
     # Add routes to the app first
     router.include_router(app)
     
-    # Then add middleware - it will introspect lazily when needed
-    app.add_middleware(OpenAPIMiddleware, title="Test API", version="1.0.0")
+    # Then add OpenAPI routes
+    add_openapi_routes(app, router)
     
     return app
 
