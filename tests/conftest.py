@@ -1,5 +1,4 @@
 import sys
-import os
 from pathlib import Path
 
 # Add the project root to the path so tests can import the package

@@ -48,8 +48,8 @@ async def get_items() -> List[Item]:
 
 
 # Include the router and add OpenAPI documentation routes
-router.include_router(app)
-add_openapi_routes(app, router)
+router.register_routes(app)
+add_openapi_routes(app)
 ```
 
 > **💡 For a more comprehensive example** showing multiple routers, different data models, and advanced features, check out [`examples/basic_app.py`](examples/basic_app.py).
