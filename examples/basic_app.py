@@ -22,7 +22,7 @@ app = Starlette()
 
 # Create multiple routers - one for items, one for users
 items_router = MsgspecRouter()
-users_router = MsgspecRouter()
+users_router = MsgspecRouter(tags=["users"])
 
 # Items routes
 @items_router.get("/items", tags=["items"])
@@ -46,7 +46,7 @@ async def get_item(request) -> Item:
     return Item(name=f"Item {item_id}", price=10.0)
 
 # Users routes
-@users_router.get("/users", tags=["users"])
+@users_router.get("/users")
 async def get_users() -> List[User]:
     """Get a list of all users."""
     return [
@@ -54,7 +54,7 @@ async def get_users() -> List[User]:
         User(id=2, name="Bob", email="bob@example.com")
     ]
 
-@users_router.post("/users", tags=["users"])
+@users_router.post("/users")
 async def create_user(body: User) -> User:
     """Create a new user."""
     # In a real application, you would save the user

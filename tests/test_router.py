@@ -82,3 +82,89 @@ def test_openapi_schema(client):
     assert item_schema["type"] == "object"
     assert "name" in item_schema["properties"]
     assert "price" in item_schema["properties"]
+
+def test_router_level_tags():
+    """Test that router-level tags are applied to all routes."""
+    app = Starlette()
+    router = MsgspecRouter(tags=["api", "v1"])
+    
+    @router.get("/test")
+    async def test_route() -> dict:
+        return {"message": "test"}
+    
+    router.include_router(app)
+    add_openapi_routes(app)
+    
+    client = TestClient(app)
+    response = client.get("/openapi.json")
+    schema = response.json()
+    
+    # Check that the route has router-level tags
+    assert "/test" in schema["paths"]
+    assert "get" in schema["paths"]["/test"]
+    operation = schema["paths"]["/test"]["get"]
+    assert "tags" in operation
+    assert operation["tags"] == ["api", "v1"]
+
+def test_combined_router_and_endpoint_tags():
+    """Test that router-level and endpoint-level tags are combined."""
+    app = Starlette()
+    router = MsgspecRouter(tags=["api", "v1"])
+    
+    @router.get("/test", tags=["special"])
+    async def test_route() -> dict:
+        return {"message": "test"}
+    
+    router.include_router(app)
+    add_openapi_routes(app)
+    
+    client = TestClient(app)
+    response = client.get("/openapi.json")
+    schema = response.json()
+    
+    # Check that the route has both router-level and endpoint-level tags
+    operation = schema["paths"]["/test"]["get"]
+    assert "tags" in operation
+    assert operation["tags"] == ["api", "v1", "special"]
+
+def test_router_without_tags():
+    """Test that router without tags works as before."""
+    app = Starlette()
+    router = MsgspecRouter()  # No tags specified
+    
+    @router.get("/test", tags=["endpoint-only"])
+    async def test_route() -> dict:
+        return {"message": "test"}
+    
+    router.include_router(app)
+    add_openapi_routes(app)
+    
+    client = TestClient(app)
+    response = client.get("/openapi.json")
+    schema = response.json()
+    
+    # Check that only endpoint tags are present
+    operation = schema["paths"]["/test"]["get"]
+    assert "tags" in operation
+    assert operation["tags"] == ["endpoint-only"]
+
+def test_router_tags_only():
+    """Test router with tags but endpoint without tags."""
+    app = Starlette()
+    router = MsgspecRouter(tags=["router-only"])
+    
+    @router.get("/test")
+    async def test_route() -> dict:
+        return {"message": "test"}
+    
+    router.include_router(app)
+    add_openapi_routes(app)
+    
+    client = TestClient(app)
+    response = client.get("/openapi.json")
+    schema = response.json()
+    
+    # Check that only router tags are present
+    operation = schema["paths"]["/test"]["get"]
+    assert "tags" in operation
+    assert operation["tags"] == ["router-only"]
