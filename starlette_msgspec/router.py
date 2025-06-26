@@ -122,7 +122,11 @@ class MsgspecRouter:
             self.route_info.append(route_info)
 
             # Create Starlette Route
-            route = Route(self.prefix + path, endpoint, methods=[method])
+            full_path = self.prefix + path
+            if not full_path.startswith("/"):
+                full_path = "/" + full_path
+
+            route = Route(full_path, endpoint, methods=[method])
 
             self.routes.append(route)
             return func
