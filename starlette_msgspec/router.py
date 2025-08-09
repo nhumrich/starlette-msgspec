@@ -12,7 +12,7 @@ from typing import (
 )
 from starlette.routing import Route, Mount
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import Response, JSONResponse
 from starlette.applications import Starlette
 import msgspec
 
@@ -21,9 +21,7 @@ class MsgspecRouter:
     """Router that handles routes with msgspec integration."""
 
     @classmethod
-    def mount_routers(
-        cls, app: Starlette, prefix: str, routers: list["MsgspecRouter"]
-    ):
+    def mount_routers(cls, app: Starlette, prefix: str, routers: list["MsgspecRouter"]):
         all_routes = []
         for router in routers:
             all_routes.extend(router.routes)
@@ -97,10 +95,13 @@ class MsgspecRouter:
                 # Call the handler function
                 result = await func(**kwargs)
 
-                # Return JSONResponse with msgspec encoding
-                response = JSONResponse(msgspec.to_builtins(result))
+                # if the wrapped function returned a Starlette Response or subclass,
+                # then use that. Otherwise, assumse JSON.
+                if not isinstance(result, Response):
+                    # Return JSONResponse with msgspec encoding
+                    return JSONResponse(msgspec.to_builtins(result))
 
-                return response
+                return result
 
             # Store route information for OpenAPI
             # Combine router-level tags with endpoint-level tags
