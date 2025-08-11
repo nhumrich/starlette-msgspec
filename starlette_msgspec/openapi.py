@@ -222,9 +222,9 @@ def add_openapi_routes(
 
     async def docs_endpoint(request):
         if docs_endpoint._cache is None:
-            openapi_endpoint._cache = generate_swagger_html()
+            docs_endpoint._cache = generate_swagger_html()
 
-        return HTMLResponse(openapi_endpoint._cache)
+        return HTMLResponse(docs_endpoint._cache)
     docs_endpoint._cache = None
 
     # Add routes to the app
