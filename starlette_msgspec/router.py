@@ -91,6 +91,8 @@ class MsgspecRouter:
                         kwargs[body_param[0]] = body_data
                     except msgspec.ValidationError as e:
                         return JSONResponse({"detail": str(e)}, status_code=422)
+                    except msgspec.DecodeError as e:
+                        return JSONResponse({"detail": 'Error parsing JSON Body'}, status_code=400)
 
                 # Call the handler function
                 result = await func(**kwargs)

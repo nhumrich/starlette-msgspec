@@ -67,6 +67,27 @@ def test_create_item_validation(client):
     assert "detail" in response.json()
 
 
+def test_create_item_bad_request(client):
+    # Send malformed JSON to trigger HTTP 400
+    response = client.post(
+        "/items/",
+        content='{"name": "Invalid JSON"',  # Missing closing brace
+        headers={"content-type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Error parsing JSON Body"
+
+
+def test_create_item_no_body(client):
+    # Send POST request without body to trigger HTTP 400
+    response = client.post(
+        "/items/",
+        headers={"content-type": "application/json"}
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Error parsing JSON Body"
+
+
 def test_openapi_schema(client):
     response = client.get("/openapi.json")
     assert response.status_code == 200
