@@ -27,7 +27,11 @@ class MsgspecRouter:
             all_routes.extend(router.routes)
             # Update route_info paths to include mount prefix for OpenAPI
             for route_info in router.route_info:
-                route_info["path"] = prefix + route_info["path"]
+                # Ensure proper slash separator between prefix and path
+                path = route_info["path"]
+                if not path.startswith("/"):
+                    path = "/" + path
+                route_info["path"] = prefix + path
             router._register_with_openapi(app)
 
         app.routes.append(Mount(prefix, routes=all_routes))

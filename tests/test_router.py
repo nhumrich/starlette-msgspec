@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from starlette.applications import Starlette
 from starlette.testclient import TestClient
@@ -411,7 +413,7 @@ def test_mount_prefix_with_multiple_routers_in_openapi():
 def test_mount_prefix_with_individual_router_prefixes():
     """Test mounting routers that have their own prefixes plus a mount prefix."""
     app = Starlette()
-    
+
     # Create routers WITH individual prefixes
     v1_router = MsgspecRouter(prefix="/v1", tags=["v1"])
     v2_router = MsgspecRouter(prefix="/v2", tags=["v2"])
@@ -429,33 +431,87 @@ def test_mount_prefix_with_individual_router_prefixes():
     add_openapi_routes(app)
 
     client = TestClient(app)
-    
+
     # Test that actual endpoints work with both mount prefix AND individual router prefix
     response = client.get("/api/v1/status")
     assert response.status_code == 200
     data = response.json()
     assert data["version"] == "1.0"
-    
+
     response = client.get("/api/v2/status")
     assert response.status_code == 200
     data = response.json()
     assert data["version"] == "2.0"
-    
+
     # Test OpenAPI schema
     response = client.get("/openapi.json")
     schema = response.json()
-    
+
     # The OpenAPI should show the mount prefix + individual router prefixes
     assert "/api/v1/status" in schema["paths"]
     assert "/api/v2/status" in schema["paths"]
-    
+
     # Verify that paths without mount prefix are not present
     assert "/v1/status" not in schema["paths"]
     assert "/v2/status" not in schema["paths"]
-    
+
     # Verify tags
     v1_operation = schema["paths"]["/api/v1/status"]["get"]
     v2_operation = schema["paths"]["/api/v2/status"]["get"]
-    
+
     assert v1_operation["tags"] == ["v1"]
     assert v2_operation["tags"] == ["v2"]
+
+
+def test_mount_routers_with_paths_missing_leading_slash():
+    """Test that mounted routers correctly handle paths without leading slashes.
+
+    This reproduces the bug where paths like 'data.fetch' would be concatenated
+    directly with the mount prefix '/api' resulting in '/apidata.fetch' instead
+    of '/api/data.fetch'.
+    """
+    app = Starlette()
+
+    data_router = MsgspecRouter(tags=["data"])
+
+    @data_router.post("data.create")
+    async def create_data() -> dict:
+        return {"status": "created"}
+
+    @data_router.get("data.list")
+    async def list_data() -> dict:
+        return {"items": []}
+
+    # Mount router with prefix
+    MsgspecRouter.mount_routers(app, "/api", [data_router])
+    add_openapi_routes(app)
+
+    client = TestClient(app)
+
+    # Test that actual endpoints work with proper slash separation
+    response = client.post("/api/data.create")
+    assert response.status_code == 200
+    assert response.json() == {"status": "created"}
+
+    response = client.get("/api/data.list")
+    assert response.status_code == 200
+    assert response.json() == {"items": []}
+
+    # Test OpenAPI schema includes properly formatted paths
+    response = client.get("/openapi.json")
+    schema = response.json()
+
+    # Should have proper slash separator between mount prefix and path
+    assert "/api/data.create" in schema["paths"]
+    assert "/api/data.list" in schema["paths"]
+
+    # Should NOT have malformed concatenated paths
+    assert "/apidata.create" not in schema["paths"]
+    assert "/apidata.list" not in schema["paths"]
+
+    # Verify tags are correctly applied
+    create_operation = schema["paths"]["/api/data.create"]["post"]
+    list_operation = schema["paths"]["/api/data.list"]["get"]
+
+    assert create_operation["tags"] == ["data"]
+    assert list_operation["tags"] == ["data"]
